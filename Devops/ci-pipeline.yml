@@ -1,0 +1,57 @@
+trigger:
+- main
+
+pr: none
+
+pool:
+  vmImage: 'ubuntu-18.04'
+
+variables:
+
+  projectName: 'logicappsamplecellenza'
+  suffix: 'dev'
+
+  # Resource Group
+  resourceGroupLocation: 'westeurope'
+  resourceGroupName: 'hbr-rg-weu-$(projectName)-$(suffix)'
+
+  # Storage - make sure this is unique!
+  storageName: 'hbrsa$(projectName)$(suffix)'
+  appServicePlanName: 'hbrasp$(projectName)$(suffix)'
+
+  #  Logic App
+  logicAppName: 'hbr-la-weu-$(projectName)-$(suffix)'
+
+  # API Connections - if you change this name, you must change the reference in workflow.json
+  blobConnectionName: 'azureblob'
+
+  # Project artifacts
+  logicAppCIArtifactName: 'logicapp_publish_artifact'
+
+jobs:
+- job: logic_app_build
+  displayName: 'Build and publish logic app'
+  steps:
+  - task: CopyFiles@2
+    displayName: 'Create project folder'
+    inputs:
+      SourceFolder: '$(System.DefaultWorkingDirectory)/[folder-project]/LogicApp-Code'
+      Contents: |
+        **
+      TargetFolder: 'project_output'
+
+  - task: ArchiveFiles@2
+    displayName: 'Create project zip'
+    inputs:
+      rootFolderOrFile: '$(System.DefaultWorkingDirectory)/project_output'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      replaceExistingArchive: true
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish project zip artifact'
+    inputs:
+      targetPath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      artifact: '$(logicAppCIArtifactName)'
+      publishLocation: 'pipeline'
