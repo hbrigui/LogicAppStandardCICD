@@ -12,7 +12,7 @@
         },
         "triggerUrl": "@appsetting('azureFunctionOperation_functionTriggerURI')"
     }
-    },
+  },
   "managedApiConnections": {
     "azureblob": {
       "api": {

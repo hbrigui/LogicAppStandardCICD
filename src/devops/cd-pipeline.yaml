@@ -1,15 +1,12 @@
 trigger: none
 
-pr: none
-
 variables:
 - name: devEnvironment
   value: dev
 
 resources:
   pipelines:
-  - pipeline: cipipeline
-    # TODO: Update with the name of your CI pipeline
+  - pipeline: cipipeline # TODO: Update with the name of your CI pipeline & apply it to line 71
     source: 'CI Pipeline'
     trigger:
       branches:
@@ -20,26 +17,11 @@ stages:
   displayName: 'DEV Deployment'
   # IaC variables
   variables:
-    projectName: 'logicappsamplecellenza'
-    suffix: 'dev'
-    # Resource Group
-    resourceGroupLocation: 'westeurope'
-    resourceGroupName: 'hbr-rg-weu-$(projectName)-$(suffix)'
-    # Storage - make sure this is unique!
-    storageName: 'hbrsa$(projectName)$(suffix)'
-    appServicePlanName: 'hbrasp$(projectName)$(suffix)'
-    #  Logic App
-    logicAppName: 'hbr-la-weu-$(projectName)-$(suffix)'
-    # API Connections - if you change this name, you must change the reference in workflow.json
-    blobConnectionName: 'azureblob'
-    # Project artifacts
-    logicAppCIArtifactName: 'logicapp_publish_artifact'
+  - template: yaml-templates/pipeline-vars.yml
 
   jobs:
   - deployment: deploy_logicapp_resources
     displayName: Deploy Logic App
-    pool:
-      vmImage: ubuntu-18.04
     environment: $(devEnvironment)
     variables:
       deploymentMode: 'Incremental'
@@ -54,7 +36,7 @@ stages:
               appName: '$(logicAppName)'
               resourceGroupName: '$(resourceGroupName)'
               
-              # Add the app settings for the connections 
+              # TODO: Add the app settings for the connections 
             
               appSettings: |
                 [
@@ -82,9 +64,8 @@ stages:
                 ]
           - task: AzureFunctionApp@1
             displayName: 'Deploy logic app workflows'
-            inputs:
-              # TODO: Fill in with the name of your Azure service connection
-              azureSubscription: 'LAStandard'
+            inputs:              
+              azureSubscription: 'LAStandard' # TODO: Fill in with the GUID of your Azure service connection created on your Azure Devops
               appType: 'functionApp'
               appName: '$(logicAppName)'
               package: '$(Pipeline.Workspace)/cipipeline/$(logicAppCIArtifactName)/$(resources.pipeline.cipipeline.runID).zip'
